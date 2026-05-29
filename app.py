@@ -3,10 +3,25 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import requests
 import io
+from matplotlib.font_manager import FontProperties # 🎯 បន្ថែមសម្រាប់គ្រប់គ្រង Font
 
 # 🔑 ព័ត៌មាន Telegram Bot របស់អ្នក
 TELEGRAM_BOT_TOKEN = "8760142697:AAG8Er5MJfIQfyUeGC0jxVbK7hUKlgnv8Ts"
 TELEGRAM_CHAT_ID = "-5079160685"
+
+# 🎯 អនុគមន៍ទាញយកពុម្ពអក្សរខ្មែរពី Google Fonts មកប្រើក្នុង Matplotlib កុំឱ្យលោតការ៉េៗ
+@st.cache_data
+def get_khmer_font():
+    try:
+        font_url = "https://github.com/google/fonts/raw/main/ofl/hanuman/Hanuman-Regular.ttf"
+        response = requests.get(font_url, timeout=10)
+        font_data = io.BytesIO(response.content)
+        return FontProperties(fname=font_data)
+    except Exception:
+        # បើអ៊ីនធឺណិតមានបញ្ហា វានឹងប្រើ Font ធម្មតារបស់ប្រព័ន្ធសិនដើម្បីកុំឱ្យគាំង
+        return FontProperties()
+
+khmer_font = get_khmer_font()
 
 def send_telegram_report(message, chart_fig=None):
     """អនុគមន៍បាញ់ទាំងអត្ថបទ និងរូបភាពក្រាហ្វទៅកាន់ Telegram ក្នុងពេលតែមួយ"""
@@ -38,7 +53,7 @@ def send_telegram_report(message, chart_fig=None):
         st.error(f"Telegram Engine Error: {e}")
         return False
 
-# 🌐 ការកំណត់រចនាសម្ព័ន្ធផ្ទាំង Web Interface បែប Premium
+# 🌐 การกำหนด cấu hình trang Web Interface แบบ Premium
 st.set_page_config(page_title="Executive Data Analyst Suite", page_icon="📊", layout="wide")
 
 # 🎨 Custom Advanced CSS injection សម្រាប់ស្ទីលវេបសាយកម្រិតខ្ពស់ (Clean & Corporate UI)
@@ -150,29 +165,25 @@ if uploaded_file is not None:
             fig.patch.set_facecolor('#F8FAFC')
             ax.grid(True, linestyle='--', alpha=0.3, color='#CBD5E1', zorder=0)
             
-            # 🎨 ប្រព័ន្ធពណ៌បែប Premium Corporate (សម្រាប់ជំនួសឱ្យក្រាហ្វិកនីមួយៗ)
+            # 🎨 ប្រព័ន្ធពណ៌បែប Premium Corporate
             color_palette = ['#1E40AF', '#0D9488', '#3B82F6', '#14B8A6', '#6366F1', '#EC4899', '#F59E0B', '#10B981']
-            
-            # ធានាថាចំនួនពណ៌មានគ្រប់គ្រាន់ទៅតាមចំនួនជួរទិន្នន័យ
             chart_colors = [color_palette[i % len(color_palette)] for i in range(len(x_plot))]
             
             if "Vertical Bar Chart" in chart_type:
-                # គូសបង្គោលឈរដោយប្តូរពណ៌តាម Category នីមួយៗ
                 bars = ax.bar(x_plot, y_plot, color=chart_colors, width=0.5, edgecolor='none', zorder=3)
                 ax.bar_label(bars, padding=4, fmt='{:,.0f}', fontsize=8, color='#475569', weight='bold')
                 
-                # 🎯 បន្ថែមប្រអប់ Legend ពណ៌សម្រាប់បង្គោលឈរ
+                # 🎯 ដាក់ Font ខ្មែរទៅឱ្យប្រអប់ Legend
                 labels_handles = [plt.Rectangle((0,0),1,1, color=chart_colors[i]) for i in range(len(x_plot))]
-                ax.legend(labels_handles, x_plot, title=x_axis, loc="center left", bbox_to_anchor=(1, 0.5))
+                ax.legend(labels_handles, x_plot, title=x_axis, loc="center left", bbox_to_anchor=(1, 0.5), prop=khmer_font).get_title().set_fontproperties(khmer_font)
 
             elif "Horizontal Bar Chart" in chart_type:
-                # គូសបង្គោលដេកដោយប្តូរពណ៌តាម Category នីមួយៗ
                 bars = ax.barh(x_plot, y_plot, color=chart_colors, height=0.5, edgecolor='none', zorder=3)
                 ax.bar_label(bars, padding=4, fmt='{:,.0f}', fontsize=8, color='#475569', weight='bold')
                 
-                # 🎯 បន្ថែមប្រអប់ Legend ពណ៌សម្រាប់បង្គោលដេក
+                # 🎯 ដាក់ Font ខ្មែរទៅឱ្យប្រអប់ Legend
                 labels_handles = [plt.Rectangle((0,0),1,1, color=chart_colors[i]) for i in range(len(x_plot))]
-                ax.legend(labels_handles, x_plot, title=x_axis, loc="center left", bbox_to_anchor=(1, 0.5))
+                ax.legend(labels_handles, x_plot, title=x_axis, loc="center left", bbox_to_anchor=(1, 0.5), prop=khmer_font).get_title().set_fontproperties(khmer_font)
 
             elif "Line Chart" in chart_type:
                 ax.plot(x_plot, y_plot, marker='o', color='#F59E0B', linewidth=2, markersize=6, zorder=3)
@@ -182,7 +193,13 @@ if uploaded_file is not None:
             elif "Pie Chart" in chart_type:
                 wedges, texts, autotexts = ax.pie(y_plot, labels=x_plot, autopct='%1.1f%%', startangle=90, colors=chart_colors)
                 plt.setp(autotexts, size=8, weight="bold")
-                ax.legend(wedges, x_plot, title=x_axis, loc="center left", bbox_to_anchor=(1, 0.5))
+                
+                # 🎯 កែសម្រួលអក្សរខ្មែរជុំវិញនំខេក កុំឱ្យចេញប្រអប់ការ៉េ
+                for text in texts:
+                    text.set_fontproperties(khmer_font)
+                
+                # 🎯 ដាក់ Font ខ្មែរទៅឱ្យប្រអប់ Legend
+                ax.legend(wedges, x_plot, title=x_axis, loc="center left", bbox_to_anchor=(1, 0.5), prop=khmer_font).get_title().set_fontproperties(khmer_font)
                 ax.axis('equal')
                 
             elif "Area Chart" in chart_type:
@@ -193,18 +210,23 @@ if uploaded_file is not None:
                 ax.scatter(x_plot, y_plot, color='#EF4444', s=100, alpha=0.8, edgecolors='none', zorder=3)
                 
             if "Pie Chart" not in chart_type:
-                ax.set_xlabel(x_axis, fontsize=9, fontweight='bold', color='#475569')
-                ax.set_ylabel(metric_label, fontsize=9, fontweight='bold', color='#475569')
-                plt.xticks(rotation=15, ha='right', fontsize=8, color='#475569')
-                plt.yticks(fontsize=8, color='#475569')
+                # 🎯 បញ្ចូល Font ខ្មែរទៅកាន់ឈ្មោះអ័ក្ស X និង Y
+                ax.set_xlabel(x_axis, fontsize=9, fontweight='bold', color='#475569', fontproperties=khmer_font)
+                ax.set_ylabel(metric_label, fontsize=9, fontweight='bold', color='#475569', fontproperties=khmer_font)
                 
-                # លុបខ្សែគែមព័ទ្ធជុំវិញក្រាហ្វិកចេញខ្លះដើម្បីឱ្យមើលទៅ Clean
+                # 🎯 បញ្ចូល Font ខ្មែរទៅកាន់ឈ្មោះទិន្នន័យនៅលើអ័ក្ស (Ticks)
+                for label in ax.get_xticklabels():
+                    label.set_fontproperties(khmer_font)
+                for label in ax.get_yticklabels():
+                    label.set_fontproperties(khmer_font)
+                    
                 for spine in ['top', 'right']:
                     ax.spines[spine].set_visible(False)
                 for spine in ['left', 'bottom']:
                     ax.spines[spine].set_color('#E2E8F0')
                     
-            ax.set_title(f"{metric_label} broken down by {x_axis}", fontsize=11, fontweight='bold', color='#0F172A', pad=15)
+            # 🎯 បញ្ចូល Font ខ្មែរទៅកាន់ចំណងជើងធំរបស់ក្រាហ្វិក
+            ax.set_title(f"{metric_label} broken down by {x_axis}", fontsize=11, fontweight='bold', color='#0F172A', pad=15, fontproperties=khmer_font)
             
             # បង្ហាញក្រាហ្វិក
             st.pyplot(fig)
